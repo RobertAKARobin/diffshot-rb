@@ -29,11 +29,11 @@ determine_line_color(){
   # If line begins with @@ or ---
   if [[ "$1" =~ ^(@@|---) ]]; then
     echo $COLOR_HIDE
-  # If line begins with a single -
-  elif [[ "$1" =~ ^-{1}([^-]|$) ]]; then
+  # If line begins with -
+  elif [[ "$1" =~ ^- ]]; then
     echo $COLOR_DELETE
-  # If line begins with a single +
-elif [[ "$1" =~ ^\+{1}([^\+]|$) ]]; then
+  # If line begins with +
+  elif [[ "$1" =~ ^\+ ]]; then
     echo $COLOR_ADD
   else
     echo $COLOR_NORMAL

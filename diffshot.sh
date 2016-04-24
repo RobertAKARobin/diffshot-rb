@@ -1,4 +1,7 @@
 #!/bin/sh
+LANG=C
+IFS='
+'
 
 IMG_DIRECTORY="diffshots"
 
@@ -82,9 +85,6 @@ rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
 
 linenum=0
-LANG=C
-IFS='
-'
 while read commitline; do
   (( linenum++ ))
   if (( $linenum % 2 != 0 )); then
@@ -109,5 +109,6 @@ while read commitline; do
     done <<< "$(git_list_of_changed_files $hash)"
   fi
 done <<< "$(git_all_commits_but_first)"
+
 unset IFS
 unset LANG

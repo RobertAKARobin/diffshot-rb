@@ -82,29 +82,32 @@ rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
 
 linenum=0
-IFS=$'\n'
-for commitline in $(git_all_commits_but_first); do
+LANG=C
+IFS='
+'
+while read commitline; do
   (( linenum++ ))
   if (( $linenum % 2 != 0 )); then
     hash=$commitline
   else
     echo "$hash: $commitline"
     message=$(english_to_spine_case $commitline)
-    for filepath in $(git_list_of_changed_files $hash); do
+    while read filepath; do
       echo "    $filepath"
       fileabbr=$(filename_to_spine_case $filepath)
       imageout="$message.$fileabbr.png"
       IMAGE_GEN_COMMAND=$PRINT_COMMAND
       IMAGE_GEN_COMMAND+=" -fill \"$COLOR_NORMAL\" label:\"$hash: $commitline \""
-      for diffline in $(git_file_diff $hash $filepath); do
+      while read diffline; do
         diffline=$(properly_escaped $diffline)
         rowcolor=$(determine_line_color $diffline)
         IMAGE_GEN_COMMAND+=" -splice 0x$LINE_HEIGHT -fill \"$rowcolor\" -annotate 0 \" $diffline\""
-      done
+      done <<< "$(git_file_diff $hash $filepath)"
       IMAGE_GEN_COMMAND+=" -splice 0x$LINE_HEIGHT -annotate 0 \" \""
       IMAGE_GEN_COMMAND+=" \"./$IMG_DIRECTORY/$imageout\""
       eval $IMAGE_GEN_COMMAND
-    done
+    done <<< "$(git_list_of_changed_files $hash)"
   fi
-done
+done <<< "$(git_all_commits_but_first)"
 unset IFS
+unset LANG

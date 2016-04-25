@@ -52,8 +52,16 @@ git_all_commits_but_first(){
 
 git_list_of_changed_files(){
   hash=$1
-  # A = added, M = modified, R = removed
-  git diff --diff-filter=AMR --name-only "$hash~..$hash"
+  diffiles=""
+  while read file; do
+    # A numstat entry beginning with `-` is binary
+    if [[ "$file" =~ ^[^-] ]]; then
+      diffiles+="$(echo $file | sed -e $'s/^[0-9]\{1,\}\t[0-9]\{1,\}\t//')"
+      diffiles+=$'\n'
+    fi
+    # A = added, M = modified, R = removed
+  done <<< "$(git diff --diff-filter=AMR --numstat "$hash~..$hash")"
+  echo "$diffiles"
 }
 
 git_file_diff(){

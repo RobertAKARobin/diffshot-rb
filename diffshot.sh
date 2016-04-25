@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 LANG=C
 IFS='
 '
@@ -78,7 +78,7 @@ filename_to_spine_case(){
 }
 
 properly_escaped(){
-  printf "%q" "$1" | LANG=C sed -e s/%/\\\\%/g
+  printf "%q" "$1" | LANG=C sed -e s/%/\\\\%/g -e s/\"/\\\\\"\/g
 }
 
 rm -rf $IMG_DIRECTORY

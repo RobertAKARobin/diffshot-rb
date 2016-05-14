@@ -68,7 +68,8 @@ git_list_of_changed_files(){
 git_file_diff(){
   hash=$1
   file=$2
-  git diff --ignore-all-space --no-prefix "$hash~..$hash" -- $file| tail -n +4
+  git diff --ignore-all-space --no-prefix "$hash~..$hash" -- $file | tail -n +4 | LANG=C sed -e s/\\\\/\\\\\\\\\\\\\\\\/g
+  # Seriously, Bash?
 }
 
 english_to_spine_case(){
@@ -118,7 +119,7 @@ while read commitline; do
       done <<< "$(git_file_diff $hash $filepath)"
       IMAGE_GEN_COMMAND+=" -splice 0x$LINE_HEIGHT -annotate 0 \" \""
       IMAGE_GEN_COMMAND+=" \"./$IMG_DIRECTORY/$imageout\""
-      eval $IMAGE_GEN_COMMAND
+      eval $(printf "%s%q\n\n" $IMAGE_GEN_COMMAND)
       echo "![$commitline, $filepath]($IMG_DIRECTORY/$imageout)" >> $OUTPUT_FILE
     done <<< "$(git_list_of_changed_files $hash)"
     echo " " >> $OUTPUT_FILE

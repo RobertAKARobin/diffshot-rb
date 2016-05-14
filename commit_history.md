@@ -34,3 +34,11 @@
 ### diffshot.sh
 ![Exports commit history md, diffshot.sh](diffshots/exports-commit-history-md.diffshot-sh.png)
  
+# Added commit history and diffshots
+### commit_history.md
+![Added commit history and diffshots, commit_history.md](diffshots/added-commit-history-and-diffshots.commit-history-md.png)
+ 
+# Fixed backslash escaping
+### diffshot.sh
+![Fixed backslash escaping, diffshot.sh](diffshots/fixed-backslash-escaping.diffshot-sh.png)
+ 

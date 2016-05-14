@@ -95,6 +95,8 @@ rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
 rm $OUTPUT_FILE
 touch $OUTPUT_FILE
+echo "Created using [Diffshot](https://github.com/RobertAKARobin/diffshot)" >> $OUTPUT_FILE
+echo " " >> $OUTPUT_FILE
 
 linenum=0
 while read commitline; do
@@ -104,7 +106,7 @@ while read commitline; do
   else
     echo "$hash: $commitline"
     message=$(english_to_spine_case $commitline)
-    echo "# $commitline" >> $OUTPUT_FILE
+    echo "# $commitline \($hash\)" >> $OUTPUT_FILE
     while read filepath; do
       echo "    $filepath"
       echo "### $filepath" >> $OUTPUT_FILE

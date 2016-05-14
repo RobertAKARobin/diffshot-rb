@@ -4,6 +4,7 @@ IFS='
 '
 
 IMG_DIRECTORY="diffshots"
+OUTPUT_FILE="commit_history.md"
 
 FONT="Consolas"
 FONT_SIZE="16"
@@ -30,7 +31,7 @@ heredoc)
 
 determine_line_color(){
   # If line begins with @@ or ---
-  if [[ "$1" =~ ^(@@|---) ]]; then
+  if [[ "$1" =~ ^(@@|---|\+\+\+) ]]; then
     echo $COLOR_HIDE
   # If line begins with -
   elif [[ "$1" =~ ^- ]]; then
@@ -47,7 +48,7 @@ determine_line_color(){
 # Removes the first commit since you can't diff it
 # Prints SHA on one line and commit message on another because hard to "split"
 git_all_commits_but_first(){
-  git log --pretty=format:"%h%n%s" | tail -r | tail -n +2 | tail -r
+  git log --pretty=format:"%s%n%h" | tail -r | tail -n +2
 }
 
 git_list_of_changed_files(){
@@ -86,11 +87,13 @@ filename_to_spine_case(){
 }
 
 properly_escaped(){
-  printf "%q" "$1" | LANG=C sed -e s/%/\\\\%/g -e s/\"/\\\\\"\/g
+  printf "%q" "$1" | LANG=C sed -e s/%/\\\\%/g
 }
 
 rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
+rm $OUTPUT_FILE
+touch $OUTPUT_FILE
 
 linenum=0
 while read commitline; do
@@ -100,8 +103,10 @@ while read commitline; do
   else
     echo "$hash: $commitline"
     message=$(english_to_spine_case $commitline)
+    echo "# $commitline" >> $OUTPUT_FILE
     while read filepath; do
       echo "    $filepath"
+      echo "### $filepath" >> $OUTPUT_FILE
       fileabbr=$(filename_to_spine_case $filepath)
       imageout="$message.$fileabbr.png"
       IMAGE_GEN_COMMAND=$PRINT_COMMAND
@@ -114,7 +119,9 @@ while read commitline; do
       IMAGE_GEN_COMMAND+=" -splice 0x$LINE_HEIGHT -annotate 0 \" \""
       IMAGE_GEN_COMMAND+=" \"./$IMG_DIRECTORY/$imageout\""
       eval $IMAGE_GEN_COMMAND
+      echo "![$commitline, $filepath]($IMG_DIRECTORY/$imageout)" >> $OUTPUT_FILE
     done <<< "$(git_list_of_changed_files $hash)"
+    echo " " >> $OUTPUT_FILE
   fi
 done <<< "$(git_all_commits_but_first)"
 

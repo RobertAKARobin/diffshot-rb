@@ -3,8 +3,8 @@ LANG=C
 IFS='
 '
 
-IMG_DIRECTORY="diffshots"
-OUTPUT_FILE="commit_history.md"
+IMG_DIRECTORY="_DIFFSHOTS"
+OUTPUT_FILE="_DIFFSHOTS.md"
 
 FONT="Consolas"
 FONT_SIZE="16"

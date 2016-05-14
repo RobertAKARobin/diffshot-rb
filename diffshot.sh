@@ -29,6 +29,14 @@ convert \
 -gravity      "SouthWest"
 heredoc)
 
+get_github_url(){
+  gitpfx='git@github.com:'
+  urlpfx='https://www.github.com/'
+  echo $(git remote get-url origin | sed "s~$gitpfx~$urlpfx~" | sed "s~\.git\$~~")
+}
+
+GITHUB_URL="$(get_github_url)"
+
 determine_line_color(){
   # If line begins with @@ or ---
   if [[ "$1" =~ ^(@@|---|\+\+\+) ]]; then
@@ -93,9 +101,8 @@ properly_escaped(){
 
 rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
-rm $OUTPUT_FILE
-touch $OUTPUT_FILE
-echo "Created using [Diffshot](https://github.com/RobertAKARobin/diffshot)" >> $OUTPUT_FILE
+echo "# $GITHUB_URL" > $OUTPUT_FILE
+echo "> This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot)" >> $OUTPUT_FILE
 echo " " >> $OUTPUT_FILE
 
 linenum=0
@@ -106,10 +113,10 @@ while read commitline; do
   else
     echo "$hash: $commitline"
     message=$(english_to_spine_case $commitline)
-    echo "# $commitline \($hash\)" >> $OUTPUT_FILE
+    echo "# $commitline ([$hash]($GITHUB_URL/commit/$hash))" >> $OUTPUT_FILE
     while read filepath; do
       echo "    $filepath"
-      echo "### $filepath" >> $OUTPUT_FILE
+      echo "### [$filepath]($GITHUB_URL/blob/$hash/$filepath)" >> $OUTPUT_FILE
       fileabbr=$(filename_to_spine_case $filepath)
       imageout="$message.$fileabbr.png"
       IMAGE_GEN_COMMAND=$PRINT_COMMAND

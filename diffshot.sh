@@ -99,11 +99,17 @@ properly_escaped(){
   printf "%q" "$1" | LANG=C sed -e s/%/\\\\%/g
 }
 
+print_to_file(){
+  printf "$1\n\n" >> $OUTPUT_FILE
+}
+
 rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
-echo "# $GITHUB_URL" > $OUTPUT_FILE
-echo "> This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot)" >> $OUTPUT_FILE
-echo " " >> $OUTPUT_FILE
+rm $OUTPUT_FILE
+touch $OUTPUT_FILE
+print_to_file "# $GITHUB_URL \n\
+> This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot) \n\
+"
 
 linenum=0
 while read commitline; do
@@ -113,10 +119,11 @@ while read commitline; do
   else
     echo "$hash: $commitline"
     message=$(english_to_spine_case $commitline)
-    echo "# $commitline ([$hash]($GITHUB_URL/commit/$hash))" >> $OUTPUT_FILE
+    print_to_file "# $commitline"
+    print_to_file "> [$hash]($GITHUB_URL/commit/$hash)"
     while read filepath; do
       echo "    $filepath"
-      echo "### [$filepath]($GITHUB_URL/blob/$hash/$filepath)" >> $OUTPUT_FILE
+      print_to_file "### [$commitline: \`$filepath\`]($GITHUB_URL/blob/$hash/$filepath)"
       fileabbr=$(filename_to_spine_case $filepath)
       imageout="$message.$fileabbr.png"
       IMAGE_GEN_COMMAND=$PRINT_COMMAND
@@ -129,9 +136,8 @@ while read commitline; do
       IMAGE_GEN_COMMAND+=" -splice 0x$LINE_HEIGHT -annotate 0 \" \""
       IMAGE_GEN_COMMAND+=" \"./$IMG_DIRECTORY/$imageout\""
       eval $(printf "%s%q\n\n" $IMAGE_GEN_COMMAND)
-      echo "![$commitline, $filepath]($IMG_DIRECTORY/$imageout)" >> $OUTPUT_FILE
+      print_to_file "![$commitline, $filepath]($IMG_DIRECTORY/$imageout)"
     done <<< "$(git_list_of_changed_files $hash)"
-    echo " " >> $OUTPUT_FILE
   fi
 done <<< "$(git_all_commits_but_first)"
 

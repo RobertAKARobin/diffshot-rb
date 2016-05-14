@@ -1,9 +1,11 @@
 # Diffshot
 
 ## Description
-This script takes screenshots of every file diff through a Git repo's commit history, and outputs a markdown file containing the commit history with its images and annotations.
+This script takes screenshots of every file diff through a Git repo's commit history, and outputs a markdown file containing the commit history with its images, annotations, and table of contents.
 
 **[See this example, created with this repo.](_DIFFSHOTS.md)**
+
+> Note: The links in the table of contents don't take into account the possibility of multiple commits having the same commit message. So be a good developer and make each commit message unique!
 
 ## Installation
 

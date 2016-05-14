@@ -4,7 +4,7 @@ IFS='
 '
 
 IMG_DIRECTORY="_DIFFSHOTS"
-OUTPUT_FILE="_DIFFSHOTS.md"
+MARKDOWN_FILE="_DIFFSHOTS.md"
 
 FONT="Consolas"
 FONT_SIZE="16"
@@ -99,17 +99,15 @@ properly_escaped(){
   printf "%q" "$1" | LANG=C sed -e s/%/\\\\%/g
 }
 
-print_to_file(){
-  printf "$1\n\n" >> $OUTPUT_FILE
+gh_anchor(){
+  echo "$1" | tr '[:upper:]' '[:lower:]' | sed -e s/\ /-/g | tr -cd '[a-zA-Z0-9-_]'
 }
 
 rm -rf $IMG_DIRECTORY
 mkdir $IMG_DIRECTORY
-rm $OUTPUT_FILE
-touch $OUTPUT_FILE
-print_to_file "# $GITHUB_URL \n\
-> This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot) \n\
-"
+
+INDEX=""
+COMMITS=""
 
 linenum=0
 while read commitline; do
@@ -119,11 +117,14 @@ while read commitline; do
   else
     echo "$hash: $commitline"
     message=$(english_to_spine_case $commitline)
-    print_to_file "# $commitline"
-    print_to_file "> [$hash]($GITHUB_URL/commit/$hash)"
+    COMMITS+="# $commitline\n\n"
+    COMMITS+="> [$hash]($GITHUB_URL/commit/$hash)\n\n"
+    INDEX+="- [$hash: $commitline](#$(gh_anchor $commitline))\n"
     while read filepath; do
       echo "    $filepath"
-      print_to_file "### [$commitline: \`$filepath\`]($GITHUB_URL/blob/$hash/$filepath)"
+      header="$commitline: \`$filepath\`"
+      COMMITS+="### [$header]($GITHUB_URL/blob/$hash/$filepath)\n"
+      INDEX+="  - [$filepath](#$(gh_anchor $header))\n"
       fileabbr=$(filename_to_spine_case $filepath)
       imageout="$message.$fileabbr.png"
       IMAGE_GEN_COMMAND=$PRINT_COMMAND
@@ -136,10 +137,18 @@ while read commitline; do
       IMAGE_GEN_COMMAND+=" -splice 0x$LINE_HEIGHT -annotate 0 \" \""
       IMAGE_GEN_COMMAND+=" \"./$IMG_DIRECTORY/$imageout\""
       eval $(printf "%s%q\n\n" $IMAGE_GEN_COMMAND)
-      print_to_file "![$commitline, $filepath]($IMG_DIRECTORY/$imageout)"
+      COMMITS+="![$commitline, $filepath]($IMG_DIRECTORY/$imageout)\n\n"
     done <<< "$(git_list_of_changed_files $hash)"
   fi
 done <<< "$(git_all_commits_but_first)"
+
+echo "# $GITHUB_URL \n\
+> This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot)\n\n\
+
+## Table of Contents
+$INDEX
+$COMMITS
+" > $MARKDOWN_FILE
 
 unset IFS
 unset LANG

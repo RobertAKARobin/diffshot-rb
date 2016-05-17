@@ -40,6 +40,10 @@
   - [diffshot.sh](#better-formatting-on-markdown-file-diffshotsh)
 - [fcf0833: Added link to example](#added-link-to-example)
   - [README.md](#added-link-to-example-readmemd)
+- [0dc1e06: Added table of contents](#added-table-of-contents)
+  - [README.md](#added-table-of-contents-readmemd)
+  - [_DIFFSHOTS.md](#added-table-of-contents-_diffshotsmd)
+  - [diffshot.sh](#added-table-of-contents-diffshotsh)
 
 # First version
 
@@ -168,5 +172,17 @@
 ### [Added link to example: `README.md`](https://www.github.com/RobertAKARobin/diffshot/blob/fcf0833/README.md)
 ![Added link to example, README.md](_DIFFSHOTS/added-link-to-example.README-md.png)
 
+# Added table of contents
+
+> [0dc1e06](https://www.github.com/RobertAKARobin/diffshot/commit/0dc1e06)
+
+### [Added table of contents: `README.md`](https://www.github.com/RobertAKARobin/diffshot/blob/0dc1e06/README.md)
+![Added table of contents, README.md](_DIFFSHOTS/added-table-of-contents.README-md.png)
+
+### [Added table of contents: `_DIFFSHOTS.md`](https://www.github.com/RobertAKARobin/diffshot/blob/0dc1e06/_DIFFSHOTS.md)
+![Added table of contents, _DIFFSHOTS.md](_DIFFSHOTS/added-table-of-contents.-DIFFSHOTS-md.png)
+
+### [Added table of contents: `diffshot.sh`](https://www.github.com/RobertAKARobin/diffshot/blob/0dc1e06/diffshot.sh)
+![Added table of contents, diffshot.sh](_DIFFSHOTS/added-table-of-contents.diffshot-sh.png)
 
 

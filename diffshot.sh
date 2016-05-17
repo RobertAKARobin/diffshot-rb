@@ -142,7 +142,7 @@ while read commitline; do
   fi
 done <<< "$(git_all_commits_but_first)"
 
-echo "# $GITHUB_URL \n\
+printf "# $GITHUB_URL \n\
 > This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot)\n\n\
 
 ## Table of Contents

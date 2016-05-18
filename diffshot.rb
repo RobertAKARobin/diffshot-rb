@@ -11,7 +11,7 @@ def all_commits
     if linenum.even?
       hash  = line
     else
-      output.push({hash: hash, message: line})
+      output.unshift({hash: hash, message: line})
     end
   end
   return output
@@ -24,4 +24,22 @@ def github_url
   return remote
 end
 
-puts github_url
+def changed_files(hash)
+  # A = added, M = modified, R = removed
+  filelist  = `git diff --diff-filter=AMR --numstat #{hash}~..#{hash}`.split("\n")
+  output    = []
+  filelist.each_with_index do |file, index|
+    # A numstat entry beginning with `-` is binary
+    next if file =~ /^-/
+    # Diff file lines start with tabs
+    output.push(file.sub(/^[0-9]{1,}\t[0-9]{1,}\t/, ""))
+  end
+  return output
+end
+
+all_commits.each_with_index do |commit, index|
+  puts "#{commit[:hash]}: #{commit[:message]}"
+  changed_files(commit[:hash]).each do |filename|
+    puts "    #{filename}"
+  end
+end

@@ -17,4 +17,11 @@ def all_commits
   return output
 end
 
-puts all_commits
+def github_url
+  remote =`git remote get-url origin`
+  remote.sub!('git@github.com:', 'https://www.github.com/')
+  remote.sub!(/\.git$/, "")
+  return remote
+end
+
+puts github_url

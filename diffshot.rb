@@ -1,7 +1,7 @@
 require "mini_magick"
 require "yaml"
 
-c = YAML::load_file(File.join(__dir__, 'config.yml'))
+C = YAML::load_file(File.join(__dir__, 'config.yml'))
 
 def all_commits
   output    = []
@@ -42,10 +42,27 @@ def file_diff(hash, file)
   return diff
 end
 
+def color_of(line)
+  # If line begins with @@ or ---
+  if line =~ /^(@@|---|\+{3})/
+    return C["color"]["hide"]
+  # If line begins with -
+  elsif line =~ /^-/
+    return C["color"]["delete"]
+  # If line begins with +
+  elsif line =~ /^\+/
+    return C["color"]["add"]
+  else
+    return C["color"]["normal"]
+  end
+end
+
 all_commits.each_with_index do |commit, index|
   puts "#{commit[:hash]}: #{commit[:message]}"
   changed_files(commit[:hash]).each do |filename|
     puts "    #{filename}"
-    puts file_diff(commit[:hash], filename)
+    file_diff(commit[:hash], filename).split("\n").each do |line|
+      puts "#{color_of(line)}: #{line}"
+    end
   end
 end

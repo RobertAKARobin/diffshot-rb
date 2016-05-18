@@ -37,9 +37,15 @@ def changed_files(hash)
   return output
 end
 
+def file_diff(hash, file)
+  diff = `git diff --ignore-all-space --no-prefix --no-color "#{hash}~..#{hash}" -- #{file}`
+  return diff
+end
+
 all_commits.each_with_index do |commit, index|
   puts "#{commit[:hash]}: #{commit[:message]}"
   changed_files(commit[:hash]).each do |filename|
     puts "    #{filename}"
+    puts file_diff(commit[:hash], filename)
   end
 end

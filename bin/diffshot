@@ -1,10 +1,32 @@
-require "yaml"
+#! /usr/bin/env ruby
+
 require "fileutils"
 require "shellwords"
 
 COMMIT_RANGE = (ARGV[0] || "")
 
-C = YAML::load_file(File.join(__dir__, "config.yml"))
+C = {
+  file: {
+    img_dir:      "_DIFFSHOTS",
+    markdown:     "_DIFFSHOTS.md",
+  },
+  font: {
+    family:       "Consolas",
+    size:         "16",
+    height:       "20"
+  },
+  color: {
+    hide:         "#aaaaaa",
+    delete:       "#ff0000",
+    add:          "#00ff00",
+    normal:       "#ffffff",
+    background:   "#000000"
+  },
+  image: {
+    width:        "800",
+    quality:      "0"
+  }
+}
 
 def first_commit
   raw = `git rev-list --max-parents=0 HEAD`
@@ -30,6 +52,10 @@ def github_url
   remote.sub!("git@github.com:", "https://www.github.com/")
   remote.sub!(/\.git$/, "")
   return remote.strip
+end
+
+def has_origin?
+  return !(`git remote -v | grep origin`.empty?)
 end
 
 def all_files(hash)
@@ -66,19 +92,19 @@ end
 
 def color_of(line)
   if line =~ /^(@@|---|\+\+\+)/
-    return C["color"]["hide"]
+    return C[:color][:hide]
   elsif line =~ /^-/
-    return C["color"]["delete"]
+    return C[:color][:delete]
   elsif line =~ /^\+/
-    return C["color"]["add"]
+    return C[:color][:add]
   else
-    return C["color"]["normal"]
+    return C[:color][:normal]
   end
 end
 
 def spine_case(string)
   output = string.downcase
-  output.gsub!(/[^a-zA-Z0-9 \-]/, "")
+  output.gsub!(/[^a-zA-Z0-9 \-\.]/, "")
   output.gsub!(/ /, "-")
   output.gsub!(/-{2,}/, "-")
   return output
@@ -97,7 +123,7 @@ end
 
 def annotate(string, options = {})
   return [
-    "-splice",     "0x#{options[:height] || C["font"]["height"]}",
+    "-splice",     "0x#{options[:height] || C[:font][:height]}",
     "-fill",       q(options[:color] || color_of(string)),
     # Necessary to escape `\n`. Sigh.
     "-annotate",   "0 #{q(" " + Shellwords.escape(string).gsub("\\\\", "\\\\\\\\\\\\\\\\"))}"
@@ -108,8 +134,8 @@ end
 # MAIN PROCESS BEGINS
 # =====
 
-FileUtils.rm_rf(C["file"]["img_dir"])
-FileUtils.mkdir(C["file"]["img_dir"])
+FileUtils.rm_rf(C[:file][:img_dir])
+FileUtils.mkdir(C[:file][:img_dir])
 
 cTABLE  = ""
 cOMMITS = ""
@@ -129,34 +155,34 @@ ____
 
 cOMMITS += <<-____
 # #{commit[:message]}
-> [#{commit[:hash]}](#{github_url}/commit/#{commit[:hash]})
+> #{has_origin? ? "[#{commit[:hash]}](#{github_url}/commit/#{commit[:hash]})" : commit[:hash]}
 
 ____
 
   filenames.each do |filename|
     puts "    #{filename}"
     header    = "#{commit[:message]}: \`#{filename}\`"
-    imgname   = C["file"]["img_dir"] + "/" + [spine_case(commit[:message]), filename, "png"].join(".")
+    imgname   = C[:file][:img_dir] + "/" + [spine_case(commit[:message]), spine_case(filename), "png"].join(".")
     
 cTABLE  += <<-____
     - [#{filename}](#{anchor header})
 ____
 
 cOMMITS += <<-____
-### [#{header}](#{github_url}/blob/#{commit[:hash]}/#{filename})
+### #{has_origin? ? "[#{header}](#{github_url}/blob/#{commit[:hash]}/#{filename})" : header}
 
 ![#{commit[:message]}, #{filename}](#{imgname})
 ____
 
     command   = [
       "convert",
-      "-font",       q(C["font"]["family"]),
-      "-pointsize",  q(C["font"]["size"]),
-      "-extent",     q(C["image"]["width"]),
-      "-quality",    q(C["image"]["quality"]),
-      "-background", q(C["color"]["background"]),
+      "-font",       q(C[:font][:family]),
+      "-pointsize",  q(C[:font][:size]),
+      "-extent",     q(C[:image][:width]),
+      "-quality",    q(C[:image][:quality]),
+      "-background", q(C[:color][:background]),
       "-gravity",    q("SouthWest"),
-      "-fill",       q(C["color"]["normal"]),
+      "-fill",       q(C[:color][:normal]),
       "label:\" \""
     ]
     command.concat annotate("#{commit[:hash]}: #{commit[:message]}", {color: "#FFFF00", height: 8})
@@ -164,14 +190,14 @@ ____
       command.concat annotate(line)
     end
     command.concat annotate(" ", {height: 8})
-    command.push q(File.join(__dir__, imgname))
+    command.push q(imgname)
     command = command.join(" ")
     system(command)
   end
 end
 
-File.write C["file"]["markdown"], <<-____
-# #{github_url}
+File.write C[:file][:markdown], <<-____
+# #{has_origin? ? github_url : "Commit History"}
 
 > This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot)
 

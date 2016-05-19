@@ -2,11 +2,13 @@ require "yaml"
 require "fileutils"
 require "shellwords"
 
+COMMIT_RANGE = (ARGV[0] || "")
+
 C = YAML::load_file(File.join(__dir__, 'config.yml'))
 
 def all_commits
   output    = []
-  raw       = `git log --pretty=format:"%h%n%s"`.split("\n")
+  raw       = `git log --pretty=format:"%h%n%s" #{COMMIT_RANGE}`.split("\n")
   hash      = ""
   raw.each_with_index do |line, linenum|
     if linenum.even?

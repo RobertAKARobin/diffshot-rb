@@ -37,9 +37,8 @@ $ perl find_fonts.sh > type.xml
 
 #### 3. Install Diffshot
 
-```bash
-$ curl https://raw.githubusercontent.com/RobertAKARobin/diffshot/master/diffshot.sh > /usr/local/bin/diffshot
-$ sudo chmod 755 /usr/local/bin/diffshot
+```
+$ gem install diffshot
 ```
 
 #### 4. Try it out

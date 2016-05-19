@@ -4,7 +4,7 @@ require "shellwords"
 
 COMMIT_RANGE = (ARGV[0] || "")
 
-C = YAML::load_file(File.join(__dir__, 'config.yml'))
+C = YAML::load_file(File.join(__dir__, "config.yml"))
 
 def all_commits
   output    = []
@@ -22,9 +22,9 @@ end
 
 def github_url
   remote =`git remote get-url origin`
-  remote.sub!('git@github.com:', 'https://www.github.com/')
+  remote.sub!("git@github.com:", "https://www.github.com/")
   remote.sub!(/\.git$/, "")
-  return remote
+  return remote.strip
 end
 
 def changed_files(hash)
@@ -61,11 +61,18 @@ def color_of(line)
 end
 
 def spine_case(string)
-  string.downcase!
-  string.gsub!(/[^a-zA-Z0-9 \-]/, "")
-  string.gsub!(/ /, "-")
-  string.gsub!(/-\{2,\}/, "-")
-  return string
+  output = string.downcase
+  output.gsub!(/[^a-zA-Z0-9 \-]/, "")
+  output.gsub!(/ /, "-")
+  output.gsub!(/-{2,}/, "-")
+  return output
+end
+
+def anchor(string)
+  output = string.downcase
+  output.gsub!(/ /, "-")
+  output.gsub!(/[^a-zA-Z0-9\-_]/, "")
+  return "##{output}"
 end
 
 def q(string)
@@ -81,18 +88,46 @@ def annotate(string, options = {})
   ]
 end
 
+# =====
+# MAIN PROCESS BEGINS
+# =====
+
 FileUtils.rm_rf(C["file"]["img_dir"])
 FileUtils.mkdir(C["file"]["img_dir"])
+
+cTABLE  = ""
+cOMMITS = ""
 
 all_commits.each_with_index do |commit, index|
   puts "#{commit[:hash]}: #{commit[:message]}"
   next if index == 0
+
+cTABLE += <<-____
+- [#{commit[:hash]}: #{commit[:message]}](#{anchor commit[:message]})
+____
+
+cOMMITS += <<-____
+# #{commit[:message]}
+> [#{commit[:hash]}](#{github_url}/commit/#{commit[:hash]})
+
+____
+
   changed_files(commit[:hash]).each do |filename|
     puts "    #{filename}"
-    imgname = [spine_case(commit[:message]), filename, "png"].join(".")
-    lines   = []
-    command = []
-    command.concat [
+    header    = "#{commit[:message]}: \`#{filename}\`"
+    imgname   = C["file"]["img_dir"] + "/" + [spine_case(commit[:message]), filename, "png"].join(".")
+    
+cTABLE  += <<-____
+    - [#{filename}](#{anchor header})
+____
+
+cOMMITS += <<-____
+### [#{header}](#{github_url}/blob/#{commit[:hash]}/#{filename})
+
+![#{commit[:message]}, #{filename}](#{imgname})
+____
+
+    command   = [
       "convert",
       "-font",       q(C["font"]["family"]),
       "-pointsize",  q(C["font"]["size"]),
@@ -101,15 +136,27 @@ all_commits.each_with_index do |commit, index|
       "-background", q(C["color"]["background"]),
       "-gravity",    q("SouthWest"),
       "-fill",       q(C["color"]["normal"]),
-      "label:' '"
+      "label:\" \""
     ]
     command.concat annotate("#{commit[:hash]}: #{commit[:message]}", {color: "#FFFF00", height: 8})
     file_diff(commit[:hash], filename).split("\n").each do |line|
       command.concat annotate(line)
     end
     command.concat annotate(" ", {height: 8})
-    command.push q(File.join(__dir__, C["file"]["img_dir"], imgname))
+    command.push q(File.join(__dir__, imgname))
     command = command.join(" ")
     system(command)
   end
 end
+
+File.write C["file"]["markdown"], <<-____
+# #{github_url}
+
+> This commit history created using [Diffshot](https://github.com/RobertAKARobin/diffshot)
+
+## Table of Contents
+
+#{cTABLE}
+
+#{cOMMITS}
+____

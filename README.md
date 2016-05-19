@@ -37,22 +37,27 @@ $ perl find_fonts.sh > type.xml
 
 #### 3. Install Diffshot
 
-```bash
-$ curl https://raw.githubusercontent.com/RobertAKARobin/diffshot/master/diffshot.sh > /usr/local/bin/diffshot
-$ sudo chmod 755 /usr/local/bin/diffshot
+```
+$ gem install diffshot
 ```
 
 #### 4. Try it out
 
-Go to some Github repo, type `diffshot` (it doesn't take any arguments), and you should see it print out the commits and files as it goes through them.
+Go to some Github repo, type `diffshot`, and you should see it print out the commits and files as it goes through them.
 
-At the end, you'll have a `diffshots` folder with a bunch of images inside it! Each is named with this convention:
+At the end, you'll have a [_DIFFSHOTS](/_DIFFSHOTS) folder with a bunch of images inside it, and a [_DIFFSHOTS.md](/_DIFFSHOTS.md)! Each image is named with this convention:
 
 ```
 commit-message.file-name.png
 ```
 
 (Non-alphanumeric characters are removed or replaced with `-`.)
+
+#### Options
+
+`$ diffshot hash..hash`
+
+As with `git diff` and `git log`, you can pass a range of hashes to `diffshot` and it will iterate only over that range.
 
 ## Contributing
 

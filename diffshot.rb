@@ -6,6 +6,11 @@ COMMIT_RANGE = (ARGV[0] || "")
 
 C = YAML::load_file(File.join(__dir__, "config.yml"))
 
+def first_commit
+  raw = `git rev-list --max-parents=0 HEAD`
+  return raw[0..6]
+end
+
 def all_commits
   output    = []
   raw       = `git log --pretty=format:"%h%n%s" #{COMMIT_RANGE}`.split("\n")
@@ -27,11 +32,18 @@ def github_url
   return remote.strip
 end
 
+def all_files(hash)
+  return `git show --pretty=format: --numstat #{hash}`
+end
+
 def changed_files(hash)
   # A = added, M = modified, R = removed
-  filelist  = `git diff --diff-filter=AMR --numstat #{hash}~..#{hash}`.split("\n")
+  return `git diff --diff-filter=AMR --numstat #{hash}~..#{hash}`
+end
+
+def file_list(filelist)
   output    = []
-  filelist.each_with_index do |file, index|
+  filelist.split("\n").each_with_index do |file, index|
     # A numstat entry beginning with `-` is binary
     next if file =~ /^-/
     # Diff file lines start with tabs
@@ -41,18 +53,22 @@ def changed_files(hash)
 end
 
 def file_diff(hash, file)
-  diff = `git diff --ignore-all-space --no-prefix --no-color "#{hash}~..#{hash}" -- #{file}`
+  diff = `git show --format=format: \
+  --no-prefix \
+  --no-color \
+  --ignore-all-space \
+  --ignore-space-change \
+  --ignore-space-at-eol \
+  --ignore-blank-lines \
+  #{hash} -- #{file}`
   return diff
 end
 
 def color_of(line)
-  # If line begins with @@ or ---
-  if line =~ /^(@@|---|\+{3})/
+  if line =~ /^(@@|---|\+\+\+)/
     return C["color"]["hide"]
-  # If line begins with -
   elsif line =~ /^-/
     return C["color"]["delete"]
-  # If line begins with +
   elsif line =~ /^\+/
     return C["color"]["add"]
   else
@@ -100,7 +116,12 @@ cOMMITS = ""
 
 all_commits.each_with_index do |commit, index|
   puts "#{commit[:hash]}: #{commit[:message]}"
-  next if index == 0
+  if index == 0 && commit[:hash] == first_commit
+    filenames = all_files(commit[:hash])
+  else
+    filenames = changed_files(commit[:hash])
+  end
+  filenames   = file_list(filenames)
 
 cTABLE += <<-____
 - [#{commit[:hash]}: #{commit[:message]}](#{anchor commit[:message]})
@@ -112,7 +133,7 @@ cOMMITS += <<-____
 
 ____
 
-  changed_files(commit[:hash]).each do |filename|
+  filenames.each do |filename|
     puts "    #{filename}"
     header    = "#{commit[:message]}: \`#{filename}\`"
     imgname   = C["file"]["img_dir"] + "/" + [spine_case(commit[:message]), filename, "png"].join(".")

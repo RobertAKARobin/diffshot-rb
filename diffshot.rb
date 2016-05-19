@@ -64,6 +64,15 @@ def q(string)
   return "\"#{string}\""
 end
 
+def annotate(string, options = {})
+  return [
+    "-splice",     "0x#{options[:height] || C["font"]["height"]}",
+    "-fill",       q(options[:color] || color_of(string)),
+    # Necessary to escape `\n`. Sigh.
+    "-annotate",   "0 #{q(" " + Shellwords.escape(string).gsub("\\\\", "\\\\\\\\\\\\\\\\"))}"
+  ]
+end
+
 FileUtils.rm_rf(C["file"]["img_dir"])
 FileUtils.mkdir(C["file"]["img_dir"])
 
@@ -84,15 +93,13 @@ all_commits.each_with_index do |commit, index|
       "-background", q(C["color"]["background"]),
       "-gravity",    q("SouthWest"),
       "-fill",       q(C["color"]["normal"]),
-      "label:\" #{commit[:hash]}: #{commit[:message]}\""
+      "label:' '"
     ]
+    command.concat annotate("#{commit[:hash]}: #{commit[:message]}", {color: "#FFFF00", height: 8})
     file_diff(commit[:hash], filename).split("\n").each do |line|
-      command.concat [
-        "-splice",     "0x#{C["font"]["height"]}",
-        "-fill",       q(color_of(line)),
-        "-annotate",   "0 #{q(" " + Shellwords.escape(line))}"
-      ]
+      command.concat annotate(line)
     end
+    command.concat annotate(" ", {height: 8})
     command.push q(File.join(__dir__, C["file"]["img_dir"], imgname))
     command = command.join(" ")
     system(command)

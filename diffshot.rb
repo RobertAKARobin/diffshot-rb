@@ -60,6 +60,14 @@ def color_of(line)
   end
 end
 
+def spine_case(string)
+  string.downcase!
+  string.gsub!(/[^a-zA-Z0-9 \-]/, "")
+  string.gsub!(/ /, "-")
+  string.gsub!(/-\{2,\}/, "-")
+  return string
+end
+
 def q(string)
   return "\"#{string}\""
 end
@@ -81,7 +89,7 @@ all_commits.each_with_index do |commit, index|
   next if index == 0
   changed_files(commit[:hash]).each do |filename|
     puts "    #{filename}"
-    imgname = "#{commit[:hash]}-#{filename}.png"
+    imgname = [spine_case(commit[:message]), filename, "png"].join(".")
     lines   = []
     command = []
     command.concat [

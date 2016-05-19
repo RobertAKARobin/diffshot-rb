@@ -1,5 +1,6 @@
-require "mini_magick"
 require "yaml"
+require "fileutils"
+require "shellwords"
 
 C = YAML::load_file(File.join(__dir__, 'config.yml'))
 
@@ -57,12 +58,41 @@ def color_of(line)
   end
 end
 
+def q(string)
+  return "\"#{string}\""
+end
+
+FileUtils.rm_rf(C["file"]["img_dir"])
+FileUtils.mkdir(C["file"]["img_dir"])
+
 all_commits.each_with_index do |commit, index|
   puts "#{commit[:hash]}: #{commit[:message]}"
+  next if index == 0
   changed_files(commit[:hash]).each do |filename|
     puts "    #{filename}"
+    imgname = "#{commit[:hash]}-#{filename}.png"
+    lines   = []
+    command = []
+    command.concat [
+      "convert",
+      "-font",       q(C["font"]["family"]),
+      "-pointsize",  q(C["font"]["size"]),
+      "-extent",     q(C["image"]["width"]),
+      "-quality",    q(C["image"]["quality"]),
+      "-background", q(C["color"]["background"]),
+      "-gravity",    q("SouthWest"),
+      "-fill",       q(C["color"]["normal"]),
+      "label:\" #{commit[:hash]}: #{commit[:message]}\""
+    ]
     file_diff(commit[:hash], filename).split("\n").each do |line|
-      puts "#{color_of(line)}: #{line}"
+      command.concat [
+        "-splice",     "0x#{C["font"]["height"]}",
+        "-fill",       q(color_of(line)),
+        "-annotate",   "0 #{q(" " + Shellwords.escape(line))}"
+      ]
     end
+    command.push q(File.join(__dir__, C["file"]["img_dir"], imgname))
+    command = command.join(" ")
+    system(command)
   end
 end
